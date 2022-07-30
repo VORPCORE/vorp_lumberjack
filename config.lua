@@ -11,8 +11,8 @@ Config.MaxSwing = 5
 
 
 ----- lower number is harder
-Config.minDifficulty = 4000
-Config.maxDifficulty = 2700
+Config.minDifficulty = 3800
+Config.maxDifficulty = 2000
 ---------------------------
 
 Config.Items = {
