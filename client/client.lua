@@ -9,7 +9,7 @@ local TreeGroup = GetRandomIntInRange(0, 0xffffff)
 
 function CreateStartChopPrompt()
     Citizen.CreateThread(function()
-        local str = 'Fällen'
+        local str = 'Chop'
         CuttingPrompt = Citizen.InvokeNative(0x04F97DE45A519419)
         PromptSetControlAction(CuttingPrompt, Config.ChopPromptKey)
         str = CreateVarString(10, 'LITERAL_STRING', str)
@@ -148,7 +148,7 @@ function getUnChoppedNearbyTree(allowed_model_hashes, player, player_coords)
 end
 
 function showStartChopBtn()
-    local ChoppingGroupName = CreateVarString(10, 'LITERAL_STRING', "Baum Fällen")
+    local ChoppingGroupName = CreateVarString(10, 'LITERAL_STRING', "Chop tree")
     PromptSetActiveGroupThisFrame(TreeGroup, ChoppingGroupName)
 end
 
