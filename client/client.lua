@@ -2,12 +2,14 @@ local CuttingPrompt
 local active = false
 local sleep = true
 local ChoppedTrees = {}
+local nearby_tree
+local currently_in_restricted_town = false
 
 local TreeGroup = GetRandomIntInRange(0, 0xffffff)
 
-function Chop()
+function CreateStartChopPrompt()
     Citizen.CreateThread(function()
-        local str = 'Chop'
+        local str = 'Fällen'
         CuttingPrompt = Citizen.InvokeNative(0x04F97DE45A519419)
         PromptSetControlAction(CuttingPrompt, Config.ChopPromptKey)
         str = CreateVarString(10, 'LITERAL_STRING', str)
@@ -20,35 +22,246 @@ function Chop()
     end)
 end
 
-Citizen.CreateThread(function()
-    Chop()
-    while true do
-        Citizen.Wait(2)
-        local sleep = true
-        local playerped = PlayerPedId()
-        if not IsPedOnMount(playerped) and not IsPedInAnyVehicle(playerped) and not IsPedDeadOrDying(playerped) then
-            local x, y, z = table.unpack(GetEntityCoords(PlayerPedId()))
-            for k,v in pairs(Config.Trees) do
-                local tree = DoesObjectOfTypeExistAtCoords(x, y, z, 1.0, GetHashKey(v), true)
-                if tree and not InArray(ChoppedTrees, tostring(v)) then
-                    sleep = false
-                    if active == false then
-                        local ChoppingGroupName = CreateVarString(10, 'LITERAL_STRING', "Chop")
-                        PromptSetActiveGroupThisFrame(TreeGroup, ChoppingGroupName)
-                    end
-                    if PromptHasHoldModeCompleted(CuttingPrompt) then
-                        active = true
-                        SetCurrentPedWeapon(playerped, GetHashKey("WEAPON_UNARMED"), true, 0, false, false)
-                        Citizen.Wait(500)
-                        TriggerServerEvent("vorp_lumberjack:axecheck", tostring(v))
-                    end
-                else
+---@param coords any
+---@param radius number
+---@param hash_filter table
+---@return table,nil
+function GetTreeNearby(coords, radius, hash_filter)
 
-                end
+    local itemSet = CreateItemset(true)
+    local size = Citizen.InvokeNative(0x59B57C4B06531E1E, coords, radius, itemSet, 3, Citizen.ResultAsInteger())
+    local found_entity
+
+    if size > 0 then
+        for index = 0, size - 1 do
+            local entity = GetIndexedItemInItemset(index, itemSet)
+            local model_hash = GetEntityModel(entity)
+
+            if hash_filter[model_hash] then
+                local tree_coords = GetEntityCoords(entity)
+                local tree_x, tree_y, tree_z = table.unpack(tree_coords)
+
+                found_entity = {
+                    model_name = hash_filter[model_hash],
+                    entity = entity,
+                    model_hash = model_hash,
+                    vector_coords = tree_coords,
+                    x = tree_x,
+                    y = tree_y,
+                    z = tree_z,
+                }
+
+                break
             end
         end
-        if sleep then
-            Citizen.Wait(1000)
+    end
+
+    if IsItemsetValid(itemSet) then
+        DestroyItemset(itemSet)
+    end
+
+    return found_entity
+end
+
+---@param player number
+---@return boolean
+function isPlayerReadyToChopTrees(player)
+
+    if IsPedOnMount(player) then
+        return false
+    end
+
+    if IsPedInAnyVehicle(player) then
+        return false
+    end
+
+    if IsPedDeadOrDying(player) then
+        return false
+    end
+
+    if IsEntityInWater(player) then
+        return false
+    end
+
+    if IsPedClimbing(player) then
+        return false
+    end
+
+    if not IsPedOnFoot(player) then
+        return false
+    end
+
+    return true
+end
+
+---@param coords table
+---@return boolean
+function isTreeAlreadyChopped(coords)
+    return InArray(ChoppedTrees, tostring(coords)) == true
+end
+
+---@param restricted_towns table
+---@param player_coords table Optional
+---@return boolean
+function isInRestrictedTown(restricted_towns, player_coords)
+
+    player_coords = player_coords or GetEntityCoords(PlayerPedId())
+
+    local x, y, z = table.unpack(player_coords)
+    local town_hash = GetTown(x, y, z)
+
+    if town_hash == false then
+        return false
+    end
+
+    if restricted_towns[town_hash] then
+        return true
+    end
+
+    return false
+end
+
+---@param allowed_model_hashes table
+---@param player number Optional
+---@param player_coords table Optional
+function getUnChoppedNearbyTree(allowed_model_hashes, player, player_coords)
+
+    player = player or PlayerPedId()
+
+    if not isPlayerReadyToChopTrees(player) then
+        return nil
+    end
+
+    player_coords = player_coords or GetEntityCoords(player)
+
+    local found_nearby_tree = GetTreeNearby(player_coords, 1.3, allowed_model_hashes)
+
+    if not found_nearby_tree then
+        return nil
+    end
+
+    if isTreeAlreadyChopped(found_nearby_tree.vector_coords) then
+        return nil
+    end
+
+    return found_nearby_tree
+end
+
+function showStartChopBtn()
+    local ChoppingGroupName = CreateVarString(10, 'LITERAL_STRING', "Baum Fällen")
+    PromptSetActiveGroupThisFrame(TreeGroup, ChoppingGroupName)
+end
+
+---@param tree table
+function checkStartChopBtnPressed(tree)
+
+    if PromptHasHoldModeCompleted(CuttingPrompt) then
+        active = true
+        local player = PlayerPedId()
+        SetCurrentPedWeapon(player, GetHashKey("WEAPON_UNARMED"), true, 0, false, false)
+        Citizen.Wait(500)
+        TriggerServerEvent("vorp_lumberjack:axecheck", tostring(tree.vector_coords))
+    end
+
+end
+
+---@return table
+function convertConfigTreesToHashRegister()
+
+    local model_hashes = {}
+
+    for _, model_name in pairs(Config.Trees) do
+        local model_hash = GetHashKey(model_name)
+        model_hashes[model_hash] = model_name
+    end
+
+    return model_hashes
+end
+
+function doNothingAndWait()
+    Citizen.Wait(1000)
+end
+
+---@param tree table
+function waitForStartKey(tree)
+
+    showStartChopBtn()
+
+    checkStartChopBtnPressed(tree)
+
+    Citizen.Wait(0)
+end
+
+---@param x number
+---@param y number
+---@param z number
+---@return number,boolean
+function GetTown(x, y, z)
+    return Citizen.InvokeNative(0x43AD8FC02B429D33, x, y, z, 1)
+end
+
+---@return table
+function convertConfigTownRestrictionsToHashRegister()
+
+    local restricted_towns = {}
+
+    for _, town_restriction in pairs(Config.TownRestrictions) do
+        if not town_restriction.chop_allowed then
+            local town_hash = GetHashKey(town_restriction.name)
+            restricted_towns[town_hash] = town_restriction.name
+        end
+    end
+
+    return restricted_towns
+
+end
+
+---@param restricted_towns table
+---@param player_coords table
+function manageStartChopPrompt(restricted_towns, player_coords)
+
+    local is_promp_enabled = true
+
+    if isInRestrictedTown(restricted_towns, player_coords) then
+        is_promp_enabled = false
+    end
+    PromptSetEnabled(CuttingPrompt, is_promp_enabled)
+end
+
+Citizen.CreateThread(function()
+
+    local allowed_tree_model_hashes = convertConfigTreesToHashRegister()
+
+    local restricted_towns = convertConfigTownRestrictionsToHashRegister()
+
+    while true do
+
+        if active == false then
+
+            local player = PlayerPedId()
+            local player_coords = GetEntityCoords(player)
+
+            nearby_tree = getUnChoppedNearbyTree(allowed_tree_model_hashes, player, player_coords)
+
+            if nearby_tree then
+                manageStartChopPrompt(restricted_towns, player_coords)
+            end
+        end
+
+        doNothingAndWait()
+    end
+end)
+
+Citizen.CreateThread(function()
+
+    CreateStartChopPrompt()
+
+    while true do
+
+        if active == false and nearby_tree then
+            waitForStartKey(nearby_tree)
+        else
+            doNothingAndWait()
         end
     end
 end)
@@ -195,15 +408,19 @@ function Anim(actor, dict, body, duration, flags, introtiming, exittiming)
 end
 
 function GetArrayKey(array, value)
-    for k,v in pairs(array) do
-        if v == value then return k end
+    for k, v in pairs(array) do
+        if v == value then
+            return k
+        end
     end
     return false
 end
 
 function InArray(array, item)
-    for k,v in pairs(array) do
-        if v == item then return true end
+    for k, v in pairs(array) do
+        if v == item then
+            return true
+        end
     end
     return false
 end
