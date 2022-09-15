@@ -15,6 +15,34 @@ Config.minDifficulty = 3800
 Config.maxDifficulty = 2000
 ---------------------------
 
+Config.AxeFailTexts = {
+    "You idiot, watch out!",
+    "Oops, that almost went into my foot...",
+    "You should already hit the tree!",
+    "Careful, don't hit your knee with the axe!",
+    "That's an ax, not a hammer!",
+    "Just past the wasp's nest! phew.",
+    "Shit, slipped!",
+    "Damn it!",
+    "*#!$#!*",
+    "You better watch out or your foot will come off",
+    "The branch was rotten...",
+    "All chicks dead, the bird's nest is gone!",
+}
+
+Config.TownRestrictions = {
+    { name = 'Annesburg', chop_allowed = false },
+    { name = 'Armadillo', chop_allowed = false },
+    { name = 'Blackwater', chop_allowed = false },
+    { name = 'Lagras', chop_allowed = false },
+    { name = 'Rhodes', chop_allowed = false },
+    { name = 'StDenis', chop_allowed = false },
+    { name = 'Strawberry', chop_allowed = false },
+    { name = 'Tumbleweed', chop_allowed = false },
+    { name = 'Valentine', chop_allowed = false },
+    { name = 'Vanhorn', chop_allowed = false },
+}
+
 Config.Items = {
     {name = "sap", label = "Sap", chance = 8, amount = 2},
     {name = "honey", label = "Honey", chance = 5, amount = 2},
