@@ -134,7 +134,7 @@ function getUnChoppedNearbyTree(allowed_model_hashes, player, player_coords)
 
     player_coords = player_coords or GetEntityCoords(player)
 
-    local found_nearby_tree = GetTreeNearby(player_coords, 1.3, allowed_model_hashes)
+    local found_nearby_tree = GetTreeNearby(player_coords, 1.4, allowed_model_hashes)
 
     if not found_nearby_tree then
         return nil
