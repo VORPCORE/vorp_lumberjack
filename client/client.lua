@@ -373,6 +373,7 @@ function goChop(tree)
         if IsControlJustReleased(0, Config.CancelChopKey) or IsPedDeadOrDying(PlayerPedId()) then
             treeFinished(tree)
         elseif IsControlJustPressed(0, Config.ChopTreeKey) then
+            local randomizer =  math.random(Config.maxDifficulty,Config.minDifficulty)
             PromptSetEnabled(UsePrompt, false)
             swing = swing + 1
             Anim(ped,"amb_work@world_human_tree_chop_new@working@pre_swing@male_a@trans","pre_swing_trans_after_swing",-1,0)
