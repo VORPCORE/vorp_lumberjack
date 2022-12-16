@@ -1,8 +1,15 @@
 local CuttingPrompt
 local active = false
 local sleep = true
+local tool, hastool, UsePrompt, PropPrompt
+local swing = 0
+
+---@type table<string,boolean>
 local ChoppedTrees = {}
+
+---@type {x:number,y:number,z:number}
 local nearby_tree
+
 local currently_in_restricted_town = false
 
 local TreeGroup = GetRandomIntInRange(0, 0xffffff)
@@ -94,10 +101,37 @@ function isPlayerReadyToChopTrees(player)
     return true
 end
 
----@param coords table
+---@param coords table<number>
+---@return string
+function coordsToString(coords)
+    return round(coords[1], 1) .. '-' .. round(coords[2], 1) .. '-' .. round(coords[3], 1)
+end
+
+---@param coords table<number>
 ---@return boolean
 function isTreeAlreadyChopped(coords)
-    return InArray(ChoppedTrees, tostring(coords)) == true
+
+    local coords_string = coordsToString(coords)
+
+    local result = ChoppedTrees[coords_string] == true
+
+    --print('isTreeAlreadyChopped', coords_string, result)
+
+    return result
+end
+
+---@param coords table<number>
+function rememberTreeAsChopped(coords)
+    local coords_string = coordsToString(coords)
+    ChoppedTrees[coords_string] = true
+    --print('rememberTreeAsChopped', coords_string)
+end
+
+---@param coords table<number>
+function forgetTreeAsChopped(coords)
+    local coords_string = coordsToString(coords)
+    ChoppedTrees[coords_string] = nil
+    --print('forgetTreeAsChopped', coords_string)
 end
 
 ---@param restricted_towns table
@@ -160,7 +194,7 @@ function checkStartChopBtnPressed(tree)
         local player = PlayerPedId()
         SetCurrentPedWeapon(player, GetHashKey("WEAPON_UNARMED"), true, 0, false, false)
         Citizen.Wait(500)
-        TriggerServerEvent("vorp_lumberjack:axecheck", tostring(tree.vector_coords))
+        TriggerServerEvent("vorp_lumberjack:axecheck", tree.vector_coords)
     end
 
 end
@@ -243,7 +277,7 @@ Citizen.CreateThread(function()
 
             nearby_tree = getUnChoppedNearbyTree(allowed_tree_model_hashes, player, player_coords)
 
-            if nearby_tree then
+            if nearby_tree and not isTreeAlreadyChopped(nearby_tree.vector_coords) then
                 manageStartChopPrompt(restricted_towns, player_coords)
             end
         end
@@ -276,50 +310,92 @@ AddEventHandler("vorp_lumberjack:noaxe", function()
     active = false
 end)
 
+function releasePlayer()
+
+    if PropPrompt then
+        PromptSetEnabled(PropPrompt, false)
+        PromptSetVisible(PropPrompt, false)
+    end
+
+    if UsePrompt then
+        PromptSetEnabled(UsePrompt, false)
+        PromptSetVisible(UsePrompt, false)
+    end
+
+    FreezeEntityPosition(PlayerPedId(), false)
+end
+
+function removeCuttingPrompt()
+
+    if CuttingPrompt then
+        PromptSetEnabled(CuttingPrompt, false)
+        PromptSetVisible(CuttingPrompt, false)
+    end
+end
+
+---@param tree table<number>
+function treeFinished(tree)
+
+    swing = 0
+
+    rememberTreeAsChopped(tree)
+    Wait(2000)
+    removeToolFromPlayer()
+
+    active = false
+
+    Citizen.CreateThread(function()
+        Citizen.Wait(900000)
+        forgetTreeAsChopped(tree)
+    end)
+end
+
+function removeToolFromPlayer()
+
+    hastool = false
+
+    if not tool then
+        return
+    end
+
+    Citizen.InvokeNative(0xED00D72F81CF7278, tool, 1, 1)
+    DeleteObject(tool)
+    Citizen.InvokeNative(0x58F7DB5BD8FA2288, PlayerPedId()) -- Cancel Walk Style
+
+    tool = nil
+end
+
 function goChop(tree)
     EquipTool('p_axe02x', 'Swing')
-    local swing = 0
     local swingcount = math.random(Config.MinSwing, Config.MaxSwing)
     while hastool == true do
         FreezeEntityPosition(PlayerPedId(), true)
         if IsControlJustReleased(0, Config.CancelChopKey) or IsPedDeadOrDying(PlayerPedId()) then
-            swing = 0
-            table.insert(ChoppedTrees, tostring(tree))
-            hastool = false
-            Citizen.InvokeNative(0xED00D72F81CF7278, tool, 1, 1)
-            DeleteObject(tool)
-            Citizen.InvokeNative(0x58F7DB5BD8FA2288, ped) -- Cancel Walk Style
-            active = false
+            treeFinished(tree)
         elseif IsControlJustPressed(0, Config.ChopTreeKey) then
-            local randomizer = math.random(Config.maxDifficulty, Config.minDifficulty)
+            local randomizer =  math.random(Config.maxDifficulty,Config.minDifficulty)
+            PromptSetEnabled(UsePrompt, false)
             swing = swing + 1
             Anim(ped,"amb_work@world_human_tree_chop_new@working@pre_swing@male_a@trans","pre_swing_trans_after_swing",-1,0)
             local testplayer = exports["syn_minigame"]:taskBar(randomizer,7)
             if testplayer == 100 then
                 TriggerServerEvent('vorp_lumberjack:addItem')
+            else
+                local lumberjack_fail_txt_index = math.random(1, #Config.AxeFailTexts)
+                local lumberjack_fail_txt = Config.AxeFailTexts[lumberjack_fail_txt_index]
+                TriggerEvent("vorp:TipRight", lumberjack_fail_txt, 3000)
             end
             Wait(500)
+            PromptSetEnabled(UsePrompt, true)
         end
 
         if swing == swingcount then
-            table.insert(ChoppedTrees, tostring(tree))
-            swing = 0
-            hastool = false
-            Citizen.InvokeNative(0xED00D72F81CF7278, tool, 1, 1)
-            DeleteObject(tool)
-            Citizen.InvokeNative(0x58F7DB5BD8FA2288, ped) -- Cancel Walk Style
-            Citizen.CreateThread(function()
-                Citizen.Wait(300000)
-                table.remove(ChoppedTrees, GetArrayKey(ChoppedTrees, tostring(tree)))
-            end)
+            PromptSetEnabled(UsePrompt, false)
+            treeFinished(tree)
         end
         Wait(5)
     end
-    PromptSetEnabled(PropPrompt, false)
-    PromptSetVisible(PropPrompt, false)
-    PromptSetEnabled(UsePrompt, false)
-    PromptSetVisible(UsePrompt, false)
-    FreezeEntityPosition(PlayerPedId(), false)
+    releasePlayer()
     active = false
 end
 
@@ -424,3 +500,27 @@ function InArray(array, item)
     end
     return false
 end
+
+---@param num number
+---@param decimals number
+---@return number
+function round(num, decimals)
+
+    if type(num) ~= "number" then
+        return num
+    end
+
+    local multiplier = 10^(decimals or 0)
+    return math.floor(num * multiplier + 0.5) / multiplier
+end
+
+AddEventHandler('onResourceStop', function(resourceName)
+
+    if (GetCurrentResourceName() ~= resourceName) then
+        return
+    end
+
+    removeToolFromPlayer()
+    releasePlayer()
+    removeCuttingPrompt()
+end)

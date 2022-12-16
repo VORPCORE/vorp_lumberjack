@@ -51,6 +51,7 @@ end
 
 RegisterServerEvent('vorp_lumberjack:addItem')
 AddEventHandler('vorp_lumberjack:addItem', function()
+	math.randomseed(os.time())
 	local _source = source
 	local Character = VorpCore.getUser(_source).getUsedCharacter
 	local chance =  math.random(1,10)
