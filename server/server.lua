@@ -41,12 +41,12 @@ AddEventHandler("vorp_lumberjack:axecheck", function(tree)
 	end
 end)
 
-function keysx(table)
+local  keysx = function(table)
     local keys = 0
     for k,v in pairs(table) do
        keys = keys + 1
     end
-    return keys
+    return keys --or 1 ? if 0 will throw error 
 end
 
 RegisterServerEvent('vorp_lumberjack:addItem')
@@ -61,7 +61,13 @@ AddEventHandler('vorp_lumberjack:addItem', function()
 			table.insert(reward,v)
 		end
 	end
-	local chance2 = math.random(1,keysx(reward))
+	 local randomtotal = keysx(reward) -- localize 
+	if randomtotal == 0 then -- if 0 add at least 1 or maybe do a return
+		--randomtotal = 1 -- ensure its not 0 so it doesnt throw error, you can uncomment so players get at least one 
+           TriggerClientEvent("vorp:TipRight", _source, "You got nothing ", 3000) -- remove if you want to allow players to receive at least 1 ?
+           return -- dont run amount is 0 , comment if the top one is uncommented
+	end
+	local chance2 = math.random(1,amount2) -- if 0 the interval will be empty since minimum is 1
 	local count = math.random(1,reward[chance2].amount)
 	TriggerEvent("vorpCore:canCarryItems", tonumber(_source), count, function(canCarry)
 		TriggerEvent("vorpCore:canCarryItem", tonumber(_source), reward[chance2].name,count, function(canCarry2)
