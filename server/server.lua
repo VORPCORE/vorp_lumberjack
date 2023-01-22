@@ -46,7 +46,7 @@ local  keysx = function(table)
     for k,v in pairs(table) do
        keys = keys + 1
     end
-    return keys --or 1 ? if 0 will throw error 
+    return keys -- if 0 will throw error 
 end
 
 RegisterServerEvent('vorp_lumberjack:addItem')
