@@ -16,7 +16,7 @@ local TreeGroup = GetRandomIntInRange(0, 0xffffff)
 
 function CreateStartChopPrompt()
     Citizen.CreateThread(function()
-        local str = 'Chop'
+        local str = Config.Language.chopprompt
         CuttingPrompt = Citizen.InvokeNative(0x04F97DE45A519419)
         PromptSetControlAction(CuttingPrompt, Config.ChopPromptKey)
         str = CreateVarString(10, 'LITERAL_STRING', str)
@@ -182,7 +182,7 @@ function getUnChoppedNearbyTree(allowed_model_hashes, player, player_coords)
 end
 
 function showStartChopBtn()
-    local ChoppingGroupName = CreateVarString(10, 'LITERAL_STRING', "Chop tree")
+    local ChoppingGroupName = CreateVarString(10, 'LITERAL_STRING', Config.Language.choptree)
     PromptSetActiveGroupThisFrame(TreeGroup, ChoppingGroupName)
 end
 
@@ -430,7 +430,7 @@ function FPrompt(text, button, hold)
     Citizen.CreateThread(function()
         proppromptdisplayed = false
         PropPrompt = nil
-        local str = text or "Put Away"
+        local str = text or Config.Language.putawayprompt
         local buttonhash = button or Config.CancelChopKey
         local holdbutton = hold or false
         PropPrompt = PromptRegisterBegin()
@@ -448,7 +448,7 @@ end
 function LMPrompt(text, button, hold)
     Citizen.CreateThread(function()
         UsePrompt = nil
-        local str = text or "Use"
+        local str = text or Config.Language.useprompt
         local buttonhash = button or Config.ChopTreeKey
         local holdbutton = hold or false
         UsePrompt = PromptRegisterBegin()
