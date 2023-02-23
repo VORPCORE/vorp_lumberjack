@@ -63,7 +63,7 @@ Config.Items = {
     {name = "wood", label = "Soft Wood", chance = 10, amount = 5},
     {name = "hwood", label = "Hard Wood", chance = 8, amount = 5},
     {name = "rubber", label = "Rubber", chance = 5, amount = 4},
-    {name = "fibers", label = "Fibers", chance = 8, amount = 5},
+    {name = "branches", label = "Fibers", chance = 8, amount = 5},
     {name = "pulp", label = "Pulp", chance = 10, amount = 3},
 }
 
