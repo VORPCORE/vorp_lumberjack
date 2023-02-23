@@ -1,6 +1,6 @@
 Config = {}
 
-Config.Axe = "hatchet" -- Item you want to use as an axe
+Config.Axe = "lumberjack_axe" -- Item you want to use as an axe DONT FORGET TO PUT IT INTO YOUR SQL
 
 Config.ChopPromptKey = 0xD9D0E1C0 -- Key to press for prompt
 Config.CancelChopKey = 0x3B24C470 -- Key to Cancel Choppinp
@@ -14,6 +14,20 @@ Config.MaxSwing = 5
 Config.minDifficulty = 3800
 Config.maxDifficulty = 2000
 ---------------------------
+
+Config.Language = { -- you can translate the text in " " into your own language
+    chopprompt = "Chop",
+    choptree = "Chop tree",
+    putawayprompt = "Put Away",
+    useprompt = "Use",
+    newaxe = "Durability = 98",
+    durability = "Durability = ",
+    axebroken = "Your Axe broke",
+    noaxe = "You don't have an axe",
+    nothing = "You got nothing ",
+    something = "You got ",
+    fullinventory = "You can't carry any more "
+}
 
 Config.AxeFailTexts = {
     "You idiot, watch out!",
