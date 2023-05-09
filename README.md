@@ -4,11 +4,13 @@ lumber script
 
 ## 1. Requirements
 
-- [VORP-Core](https://github.com/VORPCORE/vorp-core-lua)
-- syn_minigame
+- [VORP-Core GitHub](https://github.com/VORPCORE/vorp-core-lua)
+- [VORP-Core Discord](https://discord.com/invite/xhJRGhQFRr)
+- **NEED** [syn_minigame](https://cdn.discordapp.com/attachments/903875147050655744/906890251312721940/syn_minigame.rar)
 
 ## 2. insallation
 `ensure vorp_lumberjack` in your resources.cfg
+`ensure syn_minigame` in your resources.cfg
 
 ## 3. features
 - chop trees and get items 
