@@ -67,7 +67,7 @@ AddEventHandler('vorp_lumberjack:addItem', function()
            TriggerClientEvent("vorp:TipRight", _source, "You got nothing ", 3000) -- remove if you want to allow players to receive at least 1 ?
            return -- dont run amount is 0 , comment if the top one is uncommented
 	end
-	local chance2 = math.random(1,amount2) -- if 0 the interval will be empty since minimum is 1
+	local chance2 = math.random(1,randomtotal) -- if 0 the interval will be empty since minimum is 1
 	local count = math.random(1,reward[chance2].amount)
 	TriggerEvent("vorpCore:canCarryItems", tonumber(_source), count, function(canCarry)
 		TriggerEvent("vorpCore:canCarryItem", tonumber(_source), reward[chance2].name,count, function(canCarry2)
