@@ -58,7 +58,7 @@ Translation.Langs = {
             descDurabilityOne = "Durabilità = 98",
             descDurabilityTwo = "Durabilità = ",
         },
-    }
+    },
     Portugues_PT = {
         [1] = "Seu idiota, cuidado!",
         [2] = "Ops, isso quase foi no meu pé...",
