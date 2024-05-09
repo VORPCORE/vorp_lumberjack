@@ -1,31 +1,26 @@
 local CuttingPrompt
 local active = false
-local sleep = true
 local tool, hastool, UsePrompt, PropPrompt
 local swing = 0
 local ChoppedTrees = {}
 local nearby_tree
-
-T = Translation.Langs[Lang]
-
+local T = Translation.Langs[Lang]
 local TreeGroup = GetRandomIntInRange(0, 0xffffff)
 
-function CreateStartChopPrompt()
-    Citizen.CreateThread(function()
-        local str = T.PromptLabels.cutLabel
-        CuttingPrompt = Citizen.InvokeNative(0x04F97DE45A519419)
-        PromptSetControlAction(CuttingPrompt, Config.ChopPromptKey)
-        str = CreateVarString(10, 'LITERAL_STRING', str)
-        PromptSetText(CuttingPrompt, str)
-        PromptSetEnabled(CuttingPrompt, true)
-        PromptSetVisible(CuttingPrompt, true)
-        PromptSetHoldMode(CuttingPrompt, true)
-        PromptSetGroup(CuttingPrompt, TreeGroup)
-        PromptRegisterEnd(CuttingPrompt)
-    end)
+local function CreateStartChopPrompt()
+    local str = T.PromptLabels.cutLabel
+    CuttingPrompt = Citizen.InvokeNative(0x04F97DE45A519419)
+    PromptSetControlAction(CuttingPrompt, Config.ChopPromptKey)
+    str = CreateVarString(10, 'LITERAL_STRING', str)
+    PromptSetText(CuttingPrompt, str)
+    PromptSetEnabled(CuttingPrompt, true)
+    PromptSetVisible(CuttingPrompt, true)
+    PromptSetHoldMode(CuttingPrompt, true)
+    PromptSetGroup(CuttingPrompt, TreeGroup)
+    PromptRegisterEnd(CuttingPrompt)
 end
 
-function GetTreeNearby(coords, radius, hash_filter)
+local function GetTreeNearby(coords, radius, hash_filter)
     local itemSet = CreateItemset(true)
     local size = Citizen.InvokeNative(0x59B57C4B06531E1E, coords, radius, itemSet, 3, Citizen.ResultAsInteger())
     local found_entity
@@ -61,16 +56,16 @@ function GetTreeNearby(coords, radius, hash_filter)
     return found_entity
 end
 
-function isPlayerReadyToChopTrees(player)
+local function isPlayerReadyToChopTrees(player)
     if IsPedOnMount(player) then
         return false
     end
 
-    if IsPedInAnyVehicle(player) then
+    if IsPedInAnyVehicle(player, false) then
         return false
     end
 
-    if IsPedDeadOrDying(player) then
+    if IsPedDeadOrDying(player, false) then
         return false
     end
 
@@ -88,12 +83,39 @@ function isPlayerReadyToChopTrees(player)
 
     return true
 end
+local function Anim(actor, dict, body, duration, flags, introtiming, exittiming)
+    Citizen.CreateThread(function()
+        RequestAnimDict(dict)
+        local dur = duration or -1
+        local flag = flags or 1
+        local intro = tonumber(introtiming) or 1.0
+        local exit = tonumber(exittiming) or 1.0
+        local timeout = 5
+        while (not HasAnimDictLoaded(dict) and timeout > 0) do
+            timeout = timeout - 1
+            if timeout == 0 then
+                print("Animation Failed to Load")
+            end
+            Citizen.Wait(300)
+        end
+        TaskPlayAnim(actor, dict, body, intro, exit, dur, flag, 1, false, 0, false, "", true)
+    end)
+end
 
-function coordsToString(coords)
+local function round(num, decimals)
+    if type(num) ~= "number" then
+        return num
+    end
+
+    local multiplier = 10 ^ (decimals or 0)
+    return math.floor(num * multiplier + 0.5) / multiplier
+end
+
+local function coordsToString(coords)
     return round(coords[1], 1) .. '-' .. round(coords[2], 1) .. '-' .. round(coords[3], 1)
 end
 
-function isTreeAlreadyChopped(coords)
+local function isTreeAlreadyChopped(coords)
     local coords_string = coordsToString(coords)
 
     local result = ChoppedTrees[coords_string] == true
@@ -101,17 +123,20 @@ function isTreeAlreadyChopped(coords)
     return result
 end
 
-function rememberTreeAsChopped(coords)
+local function rememberTreeAsChopped(coords)
     local coords_string = coordsToString(coords)
     ChoppedTrees[coords_string] = true
 end
 
-function forgetTreeAsChopped(coords)
+local function forgetTreeAsChopped(coords)
     local coords_string = coordsToString(coords)
     ChoppedTrees[coords_string] = nil
 end
+local function GetTown(x, y, z)
+    return Citizen.InvokeNative(0x43AD8FC02B429D33, x, y, z, 1)
+end
 
-function isInRestrictedTown(restricted_towns, player_coords)
+local function isInRestrictedTown(restricted_towns, player_coords)
     player_coords = player_coords or GetEntityCoords(PlayerPedId())
 
     local x, y, z = table.unpack(player_coords)
@@ -128,7 +153,7 @@ function isInRestrictedTown(restricted_towns, player_coords)
     return false
 end
 
-function getUnChoppedNearbyTree(allowed_model_hashes, player, player_coords)
+local function getUnChoppedNearbyTree(allowed_model_hashes, player, player_coords)
     player = player or PlayerPedId()
 
     if not isPlayerReadyToChopTrees(player) then
@@ -150,12 +175,12 @@ function getUnChoppedNearbyTree(allowed_model_hashes, player, player_coords)
     return found_nearby_tree
 end
 
-function showStartChopBtn()
+local function showStartChopBtn()
     local ChoppingGroupName = CreateVarString(10, 'LITERAL_STRING', T.PromptLabels.cutDesc)
     PromptSetActiveGroupThisFrame(TreeGroup, ChoppingGroupName)
 end
 
-function checkStartChopBtnPressed(tree)
+local function checkStartChopBtnPressed(tree)
     if PromptHasHoldModeCompleted(CuttingPrompt) then
         active = true
         local player = PlayerPedId()
@@ -165,7 +190,7 @@ function checkStartChopBtnPressed(tree)
     end
 end
 
-function convertConfigTreesToHashRegister()
+local function convertConfigTreesToHashRegister()
     local model_hashes = {}
 
     for _, model_name in pairs(Config.Trees) do
@@ -176,23 +201,18 @@ function convertConfigTreesToHashRegister()
     return model_hashes
 end
 
-function doNothingAndWait()
-    Citizen.Wait(1000)
+local function doNothingAndWait()
+    Wait(1000)
 end
 
-function waitForStartKey(tree)
+local function waitForStartKey(tree)
     showStartChopBtn()
-
     checkStartChopBtnPressed(tree)
-
-    Citizen.Wait(0)
+    Wait(0)
 end
 
-function GetTown(x, y, z)
-    return Citizen.InvokeNative(0x43AD8FC02B429D33, x, y, z, 1)
-end
 
-function convertConfigTownRestrictionsToHashRegister()
+local function convertConfigTownRestrictionsToHashRegister()
     local restricted_towns = {}
 
     for _, town_restriction in pairs(Config.TownRestrictions) do
@@ -205,7 +225,7 @@ function convertConfigTownRestrictionsToHashRegister()
     return restricted_towns
 end
 
-function manageStartChopPrompt(restricted_towns, player_coords)
+local function manageStartChopPrompt(restricted_towns, player_coords)
     local is_promp_enabled = true
 
     if isInRestrictedTown(restricted_towns, player_coords) then
@@ -214,9 +234,9 @@ function manageStartChopPrompt(restricted_towns, player_coords)
     PromptSetEnabled(CuttingPrompt, is_promp_enabled)
 end
 
-Citizen.CreateThread(function()
+CreateThread(function()
+    repeat Wait(1000) until LocalPlayer.state.IsSpawned
     local allowed_tree_model_hashes = convertConfigTreesToHashRegister()
-
     local restricted_towns = convertConfigTownRestrictionsToHashRegister()
 
     while true do
@@ -235,29 +255,44 @@ Citizen.CreateThread(function()
     end
 end)
 
-Citizen.CreateThread(function()
-    CreateStartChopPrompt()
+local function FPrompt(text, button, hold)
+    CreateThread(function()
+        proppromptdisplayed = false
+        PropPrompt = nil
+        local str = T.PromptLabels.keepHatchet
+        local buttonhash = button or Config.CancelChopKey
+        local holdbutton = hold or false
+        PropPrompt = PromptRegisterBegin()
+        PromptSetControlAction(PropPrompt, buttonhash)
+        str = CreateVarString(10, 'LITERAL_STRING', str)
+        PromptSetText(PropPrompt, str)
+        PromptSetEnabled(PropPrompt, false)
+        PromptSetVisible(PropPrompt, false)
+        PromptSetHoldMode(PropPrompt, holdbutton)
+        PromptRegisterEnd(PropPrompt)
+    end)
+end
 
-    while true do
-        if active == false and nearby_tree then
-            waitForStartKey(nearby_tree)
-        else
-            doNothingAndWait()
+local function LMPrompt(text, button, hold)
+    CreateThread(function()
+        UsePrompt = nil
+        local str = T.PromptLabels.useHatchet
+        local buttonhash = button or Config.ChopTreeKey
+        UsePrompt = PromptRegisterBegin()
+        PromptSetControlAction(UsePrompt, buttonhash)
+        str = CreateVarString(10, 'LITERAL_STRING', str)
+        PromptSetText(UsePrompt, str)
+        PromptSetEnabled(UsePrompt, false)
+        PromptSetVisible(UsePrompt, false)
+        if hold then
+            PromptSetHoldIndefinitelyMode(UsePrompt)
         end
-    end
-end)
+        PromptRegisterEnd(UsePrompt)
+    end)
+end
 
-RegisterNetEvent("vorp_lumberjack:axechecked")
-AddEventHandler("vorp_lumberjack:axechecked", function(tree)
-    goChop(tree)
-end)
 
-RegisterNetEvent("vorp_lumberjack:noaxe")
-AddEventHandler("vorp_lumberjack:noaxe", function()
-    active = false
-end)
-
-function releasePlayer()
+local function releasePlayer()
     if PropPrompt then
         PromptSetEnabled(PropPrompt, false)
         PromptSetVisible(PropPrompt, false)
@@ -271,29 +306,13 @@ function releasePlayer()
     FreezeEntityPosition(PlayerPedId(), false)
 end
 
-function removeCuttingPrompt()
+local function removeCuttingPrompt()
     if CuttingPrompt then
         PromptSetEnabled(CuttingPrompt, false)
         PromptSetVisible(CuttingPrompt, false)
     end
 end
-
-function treeFinished(tree)
-    swing = 0
-
-    rememberTreeAsChopped(tree)
-    Wait(2000)
-    removeToolFromPlayer()
-
-    active = false
-
-    Citizen.CreateThread(function()
-        Citizen.Wait(900000)
-        forgetTreeAsChopped(tree)
-    end)
-end
-
-function removeToolFromPlayer()
+local function removeToolFromPlayer()
     hastool = false
 
     if not tool then
@@ -307,19 +326,60 @@ function removeToolFromPlayer()
     tool = nil
 end
 
-function goChop(tree)
+local function treeFinished(tree)
+    swing = 0
+
+    rememberTreeAsChopped(tree)
+    Wait(2000)
+    removeToolFromPlayer()
+
+    active = false
+
+    Citizen.CreateThread(function()
+        Wait(900000)
+        forgetTreeAsChopped(tree)
+    end)
+end
+
+local function EquipTool(toolhash, prompttext, holdtowork)
+    hastool = false
+    Citizen.InvokeNative(0x6A2F820452017EA2) -- Clear Prompts from Screen
+    if tool then
+        DeleteEntity(tool)
+    end
+    Wait(500)
+    FPrompt()
+    LMPrompt(prompttext, Config.ChopTreeKey, holdtowork)
+    ped = PlayerPedId()
+    tool = CreateObject(toolhash, GetOffsetFromEntityInWorldCoords(ped, 0.0, 0.0, 0.0), true, true, true)
+    AttachEntityToEntity(tool, ped, GetPedBoneIndex(ped, 7966), 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0, 0, 2, 1, 0, 0);
+    Citizen.InvokeNative(0x923583741DC87BCE, ped, 'arthur_healthy')
+    Citizen.InvokeNative(0x89F5E7ADECCCB49C, ped, "carry_pitchfork")
+    Citizen.InvokeNative(0x2208438012482A1A, ped, true, true)
+    ForceEntityAiAndAnimationUpdate(tool, true)
+    Citizen.InvokeNative(0x3A50753042B6891B, ped, "PITCH_FORKS")
+
+    Wait(500)
+    PromptSetEnabled(PropPrompt, true)
+    PromptSetVisible(PropPrompt, true)
+    PromptSetEnabled(UsePrompt, true)
+    PromptSetVisible(UsePrompt, true)
+
+    hastool = true
+end
+
+local function goChop(tree)
     EquipTool('p_axe02x', 'Swing')
     local swingcount = math.random(Config.MinSwing, Config.MaxSwing)
     while hastool == true do
         FreezeEntityPosition(PlayerPedId(), true)
-        if IsControlJustReleased(0, Config.CancelChopKey) or IsPedDeadOrDying(PlayerPedId()) then
+        if IsControlJustReleased(0, Config.CancelChopKey) or IsPedDeadOrDying(PlayerPedId(), false) then
             treeFinished(tree)
         elseif IsControlJustPressed(0, Config.ChopTreeKey) then
             local randomizer = math.random(Config.maxDifficulty, Config.minDifficulty)
             PromptSetEnabled(UsePrompt, false)
             swing = swing + 1
-            Anim(ped, "amb_work@world_human_tree_chop_new@working@pre_swing@male_a@trans", "pre_swing_trans_after_swing",
-                -1, 0)
+            Anim(ped, "amb_work@world_human_tree_chop_new@working@pre_swing@male_a@trans", "pre_swing_trans_after_swing", -1, 0)
             local testplayer = exports["syn_minigame"]:taskBar(randomizer, 7)
             if testplayer == 100 then
                 TriggerServerEvent('vorp_lumberjack:addItem')
@@ -342,122 +402,32 @@ function goChop(tree)
     active = false
 end
 
-function EquipTool(toolhash, prompttext, holdtowork)
-    hastool = false
-    Citizen.InvokeNative(0x6A2F820452017EA2) -- Clear Prompts from Screen
-    if tool then
-        DeleteEntity(tool)
-    end
-    Wait(500)
-    FPrompt()
-    LMPrompt(prompttext, Config.ChopTreeKey, holdtowork)
-    ped = PlayerPedId()
-    tool = CreateObject(toolhash, GetOffsetFromEntityInWorldCoords(ped, 0.0, 0.0, 0.0), true, true, true)
-    AttachEntityToEntity(tool, ped, GetPedBoneIndex(ped, 7966), 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0, 0, 2, 1, 0, 0);
-    Citizen.InvokeNative(0x923583741DC87BCE, ped, 'arthur_healthy')
-    Citizen.InvokeNative(0x89F5E7ADECCCB49C, ped, "carry_pitchfork")
-    Citizen.InvokeNative(0x2208438012482A1A, ped, true, true)
-    ForceEntityAiAndAnimationUpdate(tool, 1)
-    Citizen.InvokeNative(0x3A50753042B6891B, ped, "PITCH_FORKS")
+CreateThread(function()
+    repeat Wait(1000) until LocalPlayer.state.IsInSession
+    CreateStartChopPrompt()
 
-    Wait(500)
-    PromptSetEnabled(PropPrompt, true)
-    PromptSetVisible(PropPrompt, true)
-    PromptSetEnabled(UsePrompt, true)
-    PromptSetVisible(UsePrompt, true)
-
-    hastool = true
-end
-
-function FPrompt(text, button, hold)
-    Citizen.CreateThread(function()
-        proppromptdisplayed = false
-        PropPrompt = nil
-        local str = T.PromptLabels.keepHatchet
-        local buttonhash = button or Config.CancelChopKey
-        local holdbutton = hold or false
-        PropPrompt = PromptRegisterBegin()
-        PromptSetControlAction(PropPrompt, buttonhash)
-        str = CreateVarString(10, 'LITERAL_STRING', str)
-        PromptSetText(PropPrompt, str)
-        PromptSetEnabled(PropPrompt, false)
-        PromptSetVisible(PropPrompt, false)
-        PromptSetHoldMode(PropPrompt, holdbutton)
-        PromptRegisterEnd(PropPrompt)
-        sleep = true
-    end)
-end
-
-function LMPrompt(text, button, hold)
-    Citizen.CreateThread(function()
-        UsePrompt = nil
-        local str = T.PromptLabels.useHatchet
-        local buttonhash = button or Config.ChopTreeKey
-        local holdbutton = hold or false
-        UsePrompt = PromptRegisterBegin()
-        PromptSetControlAction(UsePrompt, buttonhash)
-        str = CreateVarString(10, 'LITERAL_STRING', str)
-        PromptSetText(UsePrompt, str)
-        PromptSetEnabled(UsePrompt, false)
-        PromptSetVisible(UsePrompt, false)
-        if hold then
-            PromptSetHoldIndefinitelyMode(UsePrompt)
-        end
-        PromptRegisterEnd(UsePrompt)
-    end)
-end
-
-function Anim(actor, dict, body, duration, flags, introtiming, exittiming)
-    Citizen.CreateThread(function()
-        RequestAnimDict(dict)
-        local dur = duration or -1
-        local flag = flags or 1
-        local intro = tonumber(introtiming) or 1.0
-        local exit = tonumber(exittiming) or 1.0
-        timeout = 5
-        while (not HasAnimDictLoaded(dict) and timeout > 0) do
-            timeout = timeout - 1
-            if timeout == 0 then
-                print("Animation Failed to Load")
-            end
-            Citizen.Wait(300)
-        end
-        TaskPlayAnim(actor, dict, body, intro, exit, dur, flag --[[1 for repeat--]], 1, false, false, false, 0, true)
-    end)
-end
-
-function GetArrayKey(array, value)
-    for k, v in pairs(array) do
-        if v == value then
-            return k
+    while true do
+        if active == false and nearby_tree then
+            waitForStartKey(nearby_tree)
+        else
+            doNothingAndWait()
         end
     end
-    return false
-end
+end)
 
-function InArray(array, item)
-    for k, v in pairs(array) do
-        if v == item then
-            return true
-        end
-    end
-    return false
-end
+RegisterNetEvent("vorp_lumberjack:axechecked", function(tree)
+    goChop(tree)
+end)
 
-function round(num, decimals)
-    if type(num) ~= "number" then
-        return num
-    end
+RegisterNetEvent("vorp_lumberjack:noaxe", function()
+    active = false
+end)
 
-    local multiplier = 10 ^ (decimals or 0)
-    return math.floor(num * multiplier + 0.5) / multiplier
-end
 
 AddEventHandler('onResourceStop', function(resourceName)
     if (GetCurrentResourceName() ~= resourceName) then
         return
     end
-
     removeToolFromPlayer()
     releasePlayer()
     removeCuttingPrompt()
