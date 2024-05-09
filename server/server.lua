@@ -26,7 +26,7 @@ RegisterServerEvent("vorp_lumberjack:axecheck", function(tree)
 			local random = math.random(1, 3)
 			if random == 1 then
 				VorpCore.NotifyObjective(_source, T.NotifyLabels.brokeAxe, 5000)
-				exports.vorp_inventory:subItem(_source, Config.Axe, 1, metadata)
+				exports.vorp_inventory:subItem(_source, Config.Axe, 1, meta)
 				TriggerClientEvent("vorp_lumberjack:noaxe", _source)
 			else
 				exports.vorp_inventory:setItemMetadata(_source, axe.id, metadata, 1)
