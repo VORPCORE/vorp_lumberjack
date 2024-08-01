@@ -9,15 +9,15 @@ local TreeGroup = GetRandomIntInRange(0, 0xffffff)
 
 local function CreateStartChopPrompt()
     local str = T.PromptLabels.cutLabel
-    CuttingPrompt = Citizen.InvokeNative(0x04F97DE45A519419)
-    PromptSetControlAction(CuttingPrompt, Config.ChopPromptKey)
+    CuttingPrompt = UiPromptRegisterBegin()
+    UiPromptSetControlAction(CuttingPrompt, Config.ChopPromptKey)
     str = CreateVarString(10, 'LITERAL_STRING', str)
-    PromptSetText(CuttingPrompt, str)
-    PromptSetEnabled(CuttingPrompt, true)
-    PromptSetVisible(CuttingPrompt, true)
-    PromptSetHoldMode(CuttingPrompt, true)
-    PromptSetGroup(CuttingPrompt, TreeGroup)
-    PromptRegisterEnd(CuttingPrompt)
+    UiPromptSetText(CuttingPrompt, str)
+    UiPromptSetEnabled(CuttingPrompt, true)
+    UiPromptSetVisible(CuttingPrompt, true)
+    UiPromptSetHoldMode(CuttingPrompt, 500)
+    UiPromptSetGroup(CuttingPrompt, TreeGroup, 0)
+    UiPromptRegisterEnd(CuttingPrompt)
 end
 
 local function GetTreeNearby(coords, radius, hash_filter)
@@ -177,11 +177,11 @@ end
 
 local function showStartChopBtn()
     local ChoppingGroupName = CreateVarString(10, 'LITERAL_STRING', T.PromptLabels.cutDesc)
-    PromptSetActiveGroupThisFrame(TreeGroup, ChoppingGroupName)
+    UiPromptSetActiveGroupThisFrame(TreeGroup, ChoppingGroupName, 0, 0, 0, 0)
 end
 
 local function checkStartChopBtnPressed(tree)
-    if PromptHasHoldModeCompleted(CuttingPrompt) then
+    if UiPromptHasHoldModeCompleted(CuttingPrompt) then
         active = true
         local player = PlayerPedId()
         SetCurrentPedWeapon(player, GetHashKey("WEAPON_UNARMED"), true, 0, false, false)
@@ -231,11 +231,11 @@ local function manageStartChopPrompt(restricted_towns, player_coords)
     if isInRestrictedTown(restricted_towns, player_coords) then
         is_promp_enabled = false
     end
-    PromptSetEnabled(CuttingPrompt, is_promp_enabled)
+    UiPromptSetEnabled(CuttingPrompt, is_promp_enabled)
 end
 
 CreateThread(function()
-    repeat Wait(1000) until LocalPlayer.state.IsSpawned
+    repeat Wait(5000) until LocalPlayer.state.IsInSession
     local allowed_tree_model_hashes = convertConfigTreesToHashRegister()
     local restricted_towns = convertConfigTownRestrictionsToHashRegister()
 
@@ -262,14 +262,14 @@ local function FPrompt(text, button, hold)
         local str = T.PromptLabels.keepHatchet
         local buttonhash = button or Config.CancelChopKey
         local holdbutton = hold or false
-        PropPrompt = PromptRegisterBegin()
-        PromptSetControlAction(PropPrompt, buttonhash)
+        PropPrompt = UiPromptRegisterBegin()
+        UiPromptSetControlAction(PropPrompt, buttonhash)
         str = CreateVarString(10, 'LITERAL_STRING', str)
-        PromptSetText(PropPrompt, str)
-        PromptSetEnabled(PropPrompt, false)
-        PromptSetVisible(PropPrompt, false)
-        PromptSetHoldMode(PropPrompt, holdbutton)
-        PromptRegisterEnd(PropPrompt)
+        UiPromptSetText(PropPrompt, str)
+        UiPromptSetEnabled(PropPrompt, false)
+        UiPromptSetVisible(PropPrompt, false)
+        UiPromptSetHoldMode(PropPrompt, holdbutton)
+        UiPromptRegisterEnd(PropPrompt)
     end)
 end
 
@@ -278,29 +278,29 @@ local function LMPrompt(text, button, hold)
         UsePrompt = nil
         local str = T.PromptLabels.useHatchet
         local buttonhash = button or Config.ChopTreeKey
-        UsePrompt = PromptRegisterBegin()
-        PromptSetControlAction(UsePrompt, buttonhash)
+        UsePrompt = UiPromptRegisterBegin()
+        UiPromptSetControlAction(UsePrompt, buttonhash)
         str = CreateVarString(10, 'LITERAL_STRING', str)
-        PromptSetText(UsePrompt, str)
-        PromptSetEnabled(UsePrompt, false)
-        PromptSetVisible(UsePrompt, false)
+        UiPromptSetText(UsePrompt, str)
+        UiPromptSetEnabled(UsePrompt, false)
+        UiPromptSetVisible(UsePrompt, false)
         if hold then
-            PromptSetHoldIndefinitelyMode(UsePrompt)
+            UiPromptSetHoldIndefinitelyMode(UsePrompt)
         end
-        PromptRegisterEnd(UsePrompt)
+        UiPromptRegisterEnd(UsePrompt)
     end)
 end
 
 
 local function releasePlayer()
     if PropPrompt then
-        PromptSetEnabled(PropPrompt, false)
-        PromptSetVisible(PropPrompt, false)
+        UiPromptSetEnabled(PropPrompt, false)
+        UiPromptSetVisible(PropPrompt, false)
     end
 
     if UsePrompt then
-        PromptSetEnabled(UsePrompt, false)
-        PromptSetVisible(UsePrompt, false)
+        UiPromptSetEnabled(UsePrompt, false)
+        UiPromptSetVisible(UsePrompt, false)
     end
 
     FreezeEntityPosition(PlayerPedId(), false)
@@ -308,8 +308,8 @@ end
 
 local function removeCuttingPrompt()
     if CuttingPrompt then
-        PromptSetEnabled(CuttingPrompt, false)
-        PromptSetVisible(CuttingPrompt, false)
+        UiPromptSetEnabled(CuttingPrompt, false)
+        UiPromptSetVisible(CuttingPrompt, false)
     end
 end
 local function removeToolFromPlayer()
@@ -351,8 +351,10 @@ local function EquipTool(toolhash, prompttext, holdtowork)
     FPrompt()
     LMPrompt(prompttext, Config.ChopTreeKey, holdtowork)
     ped = PlayerPedId()
-    tool = CreateObject(toolhash, GetOffsetFromEntityInWorldCoords(ped, 0.0, 0.0, 0.0), true, true, true)
-    AttachEntityToEntity(tool, ped, GetPedBoneIndex(ped, 7966), 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0, 0, 2, 1, 0, 0);
+    local coords = GetOffsetFromEntityInWorldCoords(ped, 0.0, 0.0, 0.0)
+    tool = CreateObject(toolhash, coords.x, coords.y, coords.z, true, false, false, false)
+    AttachEntityToEntity(tool, ped, GetPedBoneIndex(ped, 7966), 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, false, false, false, false,
+        2, true, false, false);
     Citizen.InvokeNative(0x923583741DC87BCE, ped, 'arthur_healthy')
     Citizen.InvokeNative(0x89F5E7ADECCCB49C, ped, "carry_pitchfork")
     Citizen.InvokeNative(0x2208438012482A1A, ped, true, true)
@@ -360,10 +362,10 @@ local function EquipTool(toolhash, prompttext, holdtowork)
     Citizen.InvokeNative(0x3A50753042B6891B, ped, "PITCH_FORKS")
 
     Wait(500)
-    PromptSetEnabled(PropPrompt, true)
-    PromptSetVisible(PropPrompt, true)
-    PromptSetEnabled(UsePrompt, true)
-    PromptSetVisible(UsePrompt, true)
+    UiPromptSetEnabled(PropPrompt, true)
+    UiPromptSetVisible(PropPrompt, true)
+    UiPromptSetEnabled(UsePrompt, true)
+    UiPromptSetVisible(UsePrompt, true)
 
     hastool = true
 end
@@ -377,9 +379,10 @@ local function goChop(tree)
             treeFinished(tree)
         elseif IsControlJustPressed(0, Config.ChopTreeKey) then
             local randomizer = math.random(Config.maxDifficulty, Config.minDifficulty)
-            PromptSetEnabled(UsePrompt, false)
+            UiPromptSetEnabled(UsePrompt, false)
             swing = swing + 1
-            Anim(ped, "amb_work@world_human_tree_chop_new@working@pre_swing@male_a@trans", "pre_swing_trans_after_swing", -1, 0)
+            Anim(ped, "amb_work@world_human_tree_chop_new@working@pre_swing@male_a@trans", "pre_swing_trans_after_swing",
+                -1, 0)
             local testplayer = exports["syn_minigame"]:taskBar(randomizer, 7)
             if testplayer == 100 then
                 TriggerServerEvent('vorp_lumberjack:addItem')
@@ -389,11 +392,11 @@ local function goChop(tree)
                 TriggerEvent("vorp:TipRight", lumberjack_fail_txt, 3000)
             end
             Wait(500)
-            PromptSetEnabled(UsePrompt, true)
+            UiPromptSetEnabled(UsePrompt, true)
         end
 
         if swing == swingcount then
-            PromptSetEnabled(UsePrompt, false)
+            UiPromptSetEnabled(UsePrompt, false)
             treeFinished(tree)
         end
         Wait(5)
@@ -403,7 +406,7 @@ local function goChop(tree)
 end
 
 CreateThread(function()
-    repeat Wait(1000) until LocalPlayer.state.IsInSession
+    repeat Wait(5000) until LocalPlayer.state.IsInSession
     CreateStartChopPrompt()
 
     while true do
