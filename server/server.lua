@@ -14,12 +14,12 @@ RegisterServerEvent("vorp_lumberjack:axecheck", function(tree)
 
 	local meta = axe.metadata
 	if not next(meta) then
-		local metadata = { description = T.NotifyLabels.descDurabilityOne, durability = 99 }
+		local metadata = { description = T.NotifyLabels.descDurabilityOne .. " ".. "99", durability = 99 }
 		exports.vorp_inventory:setItemMetadata(_source, axe.id, metadata, 1)
 		TriggerClientEvent("vorp_lumberjack:axechecked", _source, choppingtree)
 	else
 		local durability = meta.durability - 1
-		local description = T.NotifyLabels.descDurabilityTwo
+		local description = T.NotifyLabels.descDurabilityTwo .. " " .. durability
 		local metadata = { description = description, durability = durability }
 
 		if durability < 20 then
