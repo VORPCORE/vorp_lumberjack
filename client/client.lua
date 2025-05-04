@@ -176,7 +176,7 @@ local function getUnChoppedNearbyTree(allowed_model_hashes, player, player_coord
 end
 
 local function showStartChopBtn()
-    local ChoppingGroupName = CreateVarString(10, 'LITERAL_STRING', T.PromptLabels.cutDesc)
+    local ChoppingGroupName = VarString(10, 'LITERAL_STRING', T.PromptLabels.cutDesc)
     UiPromptSetActiveGroupThisFrame(TreeGroup, ChoppingGroupName, 0, 0, 0, 0)
 end
 
@@ -185,7 +185,7 @@ local function checkStartChopBtnPressed(tree)
         active = true
         local player = PlayerPedId()
         SetCurrentPedWeapon(player, GetHashKey("WEAPON_UNARMED"), true, 0, false, false)
-        Citizen.Wait(500)
+        Wait(500)
         TriggerServerEvent("vorp_lumberjack:axecheck", tree.vector_coords)
     end
 end
@@ -193,7 +193,7 @@ end
 local function convertConfigTreesToHashRegister()
     local model_hashes = {}
 
-    for _, model_name in pairs(Config.Trees) do
+    for _, model_name in ipairs(Config.Trees) do
         local model_hash = GetHashKey(model_name)
         model_hashes[model_hash] = model_name
     end
@@ -215,7 +215,7 @@ end
 local function convertConfigTownRestrictionsToHashRegister()
     local restricted_towns = {}
 
-    for _, town_restriction in pairs(Config.TownRestrictions) do
+    for _, town_restriction in ipairs(Config.TownRestrictions) do
         if not town_restriction.chop_allowed then
             local town_hash = GetHashKey(town_restriction.name)
             restricted_towns[town_hash] = town_restriction.name
@@ -264,7 +264,7 @@ local function FPrompt(text, button, hold)
         local holdbutton = hold or false
         PropPrompt = UiPromptRegisterBegin()
         UiPromptSetControlAction(PropPrompt, buttonhash)
-        str = CreateVarString(10, 'LITERAL_STRING', str)
+        str = VarString(10, 'LITERAL_STRING', str)
         UiPromptSetText(PropPrompt, str)
         UiPromptSetEnabled(PropPrompt, false)
         UiPromptSetVisible(PropPrompt, false)
@@ -280,7 +280,7 @@ local function LMPrompt(text, button, hold)
         local buttonhash = button or Config.ChopTreeKey
         UsePrompt = UiPromptRegisterBegin()
         UiPromptSetControlAction(UsePrompt, buttonhash)
-        str = CreateVarString(10, 'LITERAL_STRING', str)
+        str = VarString(10, 'LITERAL_STRING', str)
         UiPromptSetText(UsePrompt, str)
         UiPromptSetEnabled(UsePrompt, false)
         UiPromptSetVisible(UsePrompt, false)

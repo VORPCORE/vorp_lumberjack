@@ -1,9 +1,15 @@
 local VorpCore = exports.vorp_core:GetCore()
 local T = Translation.Langs[Lang]
 
+local chopping_trees = {}
+
 RegisterServerEvent("vorp_lumberjack:axecheck", function(tree)
 	local _source = source
 	local choppingtree = tree
+	if chopping_trees[_source] then
+		return
+	end
+
 	local axe = exports.vorp_inventory:getItem(_source, Config.Axe)
 
 	if not axe then
@@ -14,7 +20,7 @@ RegisterServerEvent("vorp_lumberjack:axecheck", function(tree)
 
 	local meta = axe.metadata
 	if not next(meta) then
-		local metadata = { description = T.NotifyLabels.descDurabilityOne .. " ".. "99", durability = 99 }
+		local metadata = { description = T.NotifyLabels.descDurabilityOne .. " " .. "99", durability = 99 }
 		exports.vorp_inventory:setItemMetadata(_source, axe.id, metadata, 1)
 		TriggerClientEvent("vorp_lumberjack:axechecked", _source, choppingtree)
 	else
@@ -37,6 +43,7 @@ RegisterServerEvent("vorp_lumberjack:axecheck", function(tree)
 			TriggerClientEvent("vorp_lumberjack:axechecked", _source, choppingtree)
 		end
 	end
+	chopping_trees[_source] = choppingtree
 end)
 
 local function keysx(table)
@@ -50,9 +57,25 @@ end
 RegisterServerEvent('vorp_lumberjack:addItem', function()
 	math.randomseed(os.time())
 	local _source = source
+
+	local choppingtree = chopping_trees[_source]
+	if not choppingtree then
+		return
+	end
+
+	-- check coords of tree
+	local tree_coords = choppingtree
+	local player_coords = GetEntityCoords(_source)
+	local distance = #(tree_coords - player_coords)
+	if distance > 10.0 then
+		return
+	end
+
+	chopping_trees[_source] = nil
+
 	local chance = math.random(1, 10)
 	local reward = {}
-	for k, v in pairs(Config.Items) do
+	for _, v in ipairs(Config.Items) do
 		if v.chance >= chance then
 			table.insert(reward, v)
 		end
