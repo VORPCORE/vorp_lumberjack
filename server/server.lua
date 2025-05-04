@@ -46,14 +46,6 @@ RegisterServerEvent("vorp_lumberjack:axecheck", function(tree)
 	chopping_trees[_source] = choppingtree
 end)
 
-local function keysx(table)
-	local keys = 0
-	for k, v in pairs(table) do
-		keys = keys + 1
-	end
-	return keys
-end
-
 RegisterServerEvent('vorp_lumberjack:addItem', function()
 	math.randomseed(os.time())
 	local _source = source
@@ -80,7 +72,7 @@ RegisterServerEvent('vorp_lumberjack:addItem', function()
 			table.insert(reward, v)
 		end
 	end
-	local randomtotal = keysx(reward)
+	local randomtotal = #reward
 	if randomtotal == 0 then
 		VorpCore.NotifyObjective(_source, T.NotifyLabels.gotNothing, 5000)
 		return
@@ -95,4 +87,11 @@ RegisterServerEvent('vorp_lumberjack:addItem', function()
 
 	exports.vorp_inventory:addItem(_source, reward[chance2].name, count)
 	VorpCore.NotifyObjective(_source, T.NotifyLabels.yourGot .. reward[chance2].label, 3000)
+end)
+
+AddEventHandler('playerDropped', function()
+	local _source = source
+	if chopping_trees[_source] then
+		chopping_trees[_source] = nil
+	end
 end)
