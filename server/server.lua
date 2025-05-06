@@ -57,7 +57,7 @@ RegisterServerEvent('vorp_lumberjack:addItem', function()
 
 	-- check coords of tree
 	local tree_coords = choppingtree
-	local player_coords = GetEntityCoords(_source)
+	local player_coords = GetEntityCoords(GetPlayerPed(_source))
 	local distance = #(tree_coords - player_coords)
 	if distance > 10.0 then
 		return
