@@ -43,10 +43,11 @@ RegisterServerEvent("vorp_lumberjack:axecheck", function(tree)
 			TriggerClientEvent("vorp_lumberjack:axechecked", _source, choppingtree)
 		end
 	end
-	chopping_trees[_source] = choppingtree
+	chopping_trees[_source] = { coords = choppingtree, count = 0 }
 end)
 
-RegisterServerEvent('vorp_lumberjack:addItem', function()
+
+RegisterServerEvent('vorp_lumberjack:addItem', function(swings, max_swings)
 	math.randomseed(os.time())
 	local _source = source
 
@@ -56,14 +57,23 @@ RegisterServerEvent('vorp_lumberjack:addItem', function()
 	end
 
 	-- check coords of tree
-	local tree_coords = choppingtree
+	local tree_coords = choppingtree.coords
 	local player_coords = GetEntityCoords(GetPlayerPed(_source))
 	local distance = #(tree_coords - player_coords)
 	if distance > 10.0 then
 		return
 	end
 
-	chopping_trees[_source] = nil
+
+	if max_swings > Config.MaxSwing then
+		return
+	end
+
+	chopping_trees[_source].count = chopping_trees[_source].count + swings
+
+	if chopping_trees[_source].count >= max_swings then
+		chopping_trees[_source] = nil
+	end
 
 	local chance = math.random(1, 10)
 	local reward = {}

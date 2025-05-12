@@ -11,7 +11,7 @@ local function CreateStartChopPrompt()
     local str = T.PromptLabels.cutLabel
     CuttingPrompt = UiPromptRegisterBegin()
     UiPromptSetControlAction(CuttingPrompt, Config.ChopPromptKey)
-    str = CreateVarString(10, 'LITERAL_STRING', str)
+    str = VarString(10, 'LITERAL_STRING', str)
     UiPromptSetText(CuttingPrompt, str)
     UiPromptSetEnabled(CuttingPrompt, true)
     UiPromptSetVisible(CuttingPrompt, true)
@@ -387,7 +387,7 @@ local function goChop(tree)
                 -1, 0)
             local testplayer = exports["syn_minigame"]:taskBar(randomizer, 7)
             if testplayer == 100 then
-                TriggerServerEvent('vorp_lumberjack:addItem')
+                TriggerServerEvent('vorp_lumberjack:addItem', swing, swingcount)
             else
                 local lumberjack_fail_txt_index = math.random(1, #T)
                 local lumberjack_fail_txt = T[lumberjack_fail_txt_index]
