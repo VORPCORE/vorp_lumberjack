@@ -43,11 +43,23 @@ RegisterServerEvent("vorp_lumberjack:axecheck", function(tree)
 			TriggerClientEvent("vorp_lumberjack:axechecked", _source, choppingtree)
 		end
 	end
-	chopping_trees[_source] = { coords = choppingtree, count = 0 }
+	chopping_trees[_source] = { coords = choppingtree, count = 0, time = os.time() }
+end)
+
+-- clean up the table every minute
+CreateThread(function()
+	while true do
+		Wait(1000)
+		for k, v in pairs(chopping_trees) do
+			if os.time() - v.time > 60 then
+				chopping_trees[k] = nil
+			end
+		end
+	end
 end)
 
 
-RegisterServerEvent('vorp_lumberjack:addItem', function(swings, max_swings)
+RegisterServerEvent('vorp_lumberjack:addItem', function(max_swings)
 	math.randomseed(os.time())
 	local _source = source
 
@@ -64,14 +76,12 @@ RegisterServerEvent('vorp_lumberjack:addItem', function(swings, max_swings)
 		return
 	end
 
-
 	if max_swings > Config.MaxSwing then
 		return
 	end
 
-	chopping_trees[_source].count = chopping_trees[_source].count + swings
-
-	if chopping_trees[_source].count >= max_swings then
+	choppingtree.count = choppingtree.count + 1
+	if choppingtree.count >= max_swings then
 		chopping_trees[_source] = nil
 	end
 
@@ -82,15 +92,16 @@ RegisterServerEvent('vorp_lumberjack:addItem', function(swings, max_swings)
 			table.insert(reward, v)
 		end
 	end
+
 	local randomtotal = #reward
 	if randomtotal == 0 then
 		VorpCore.NotifyObjective(_source, T.NotifyLabels.gotNothing, 5000)
 		return
 	end
+
 	local chance2 = math.random(1, randomtotal)
 	local count = math.random(1, reward[chance2].amount)
 	local canCarry = exports.vorp_inventory:canCarryItem(_source, reward[chance2].name, count)
-
 	if not canCarry then
 		return VorpCore.NotifyObjective(_source, T.NotifyLabels.fullBag .. reward[chance2].label, 5000)
 	end

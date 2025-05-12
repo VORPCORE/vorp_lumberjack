@@ -387,7 +387,7 @@ local function goChop(tree)
                 -1, 0)
             local testplayer = exports["syn_minigame"]:taskBar(randomizer, 7)
             if testplayer == 100 then
-                TriggerServerEvent('vorp_lumberjack:addItem', swing, swingcount)
+                TriggerServerEvent('vorp_lumberjack:addItem', swingcount)
             else
                 local lumberjack_fail_txt_index = math.random(1, #T)
                 local lumberjack_fail_txt = T[lumberjack_fail_txt_index]
