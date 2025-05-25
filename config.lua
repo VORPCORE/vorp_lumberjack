@@ -2,21 +2,22 @@ Config = {}
 
 Lang = "English"
 
-Config.Axe = "hatchet"            -- Item you want to use as an axe, same DB
+Config.Axe = "hatchet"                  -- Item you want to use as an axe, same DB
 
-Config.ChopPromptKey = 0xD9D0E1C0 -- [ SPACE ] Key to press for prompt
+Config.ChopPromptKey = 0xD9D0E1C0       -- [ SPACE ] Key to press for prompt
+Config.CancelChopKey = 0x3B24C470       -- [ F ] Key to Cancel Choppinp
+Config.ChopTreeKey = 0x07B8BEAF         -- [ MOUSE LEFT CLICK ] Key To Chop Tree
 
-Config.CancelChopKey = 0x3B24C470 -- [ F ] Key to Cancel Choppinp
+Config.MinSwing = 1                     -- Min Swings on a Tree
+Config.MaxSwing = 5                     -- Max Swings on a Tree
 
-Config.ChopTreeKey = 0x07B8BEAF   -- [ MOUSE LEFT CLICK ] Key To Chop Tree
+Config.AxeDurabilityThreshold = 20      -- Breakage threshold of the pickaxe
 
-Config.MinSwing = 1
-
-Config.MaxSwing = 5
+Config.AxeBreakChanceMin = 1            -- Lower limit of the probability of the pick breaking
+Config.AxeBreakChanceMax = 3            -- Upper limit of the probability of the pick breaking
 
 -- Lower number is harder
 Config.minDifficulty = 3800
-
 Config.maxDifficulty = 2000
 ---------------------------
 
