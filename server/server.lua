@@ -28,8 +28,8 @@ RegisterServerEvent("vorp_lumberjack:axecheck", function(tree)
 		local description = T.NotifyLabels.descDurabilityTwo .. " " .. durability
 		local metadata = { description = description, durability = durability }
 
-		if durability < 20 then
-			local random = math.random(1, 3)
+		if durability < Config.AxeDurabilityThreshold then
+			local random = math.random(Config.AxeBreakChanceMin, Config.AxeBreakChanceMax)
 			if random == 1 then
 				VorpCore.NotifyObjective(_source, T.NotifyLabels.brokeAxe, 5000)
 				exports.vorp_inventory:subItem(_source, Config.Axe, 1, meta)
