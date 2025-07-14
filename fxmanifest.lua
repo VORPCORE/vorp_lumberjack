@@ -14,7 +14,7 @@ client_script 'client/client.lua'
 server_script 'server/server.lua'
 
 dependencies {
-    'syn_minigame'
+    --'syn_minigame'
 }
 
 version '1.1'

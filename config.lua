@@ -20,6 +20,9 @@ Config.AxeBreakChanceMax = 3            -- Upper limit of the probability of the
 Config.minDifficulty = 3800
 Config.maxDifficulty = 2000
 ---------------------------
+---
+-- CoolDown in seconds
+Config.CoolDown = 60 -- 1 minute how long to wait after chopping a tree to chop again
 
 Config.TownRestrictions = {
     { name = 'Annesburg',  chop_allowed = false },
