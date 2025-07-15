@@ -323,7 +323,6 @@ local function goChop(tree)
             local randomizer = math.random(Config.maxDifficulty, Config.minDifficulty)
             UiPromptSetEnabled(UsePrompt, false)
             swing = swing + 1
-            print(swing, swingcount)
             local ped = PlayerPedId()
             Anim(ped, "amb_work@world_human_tree_chop_new@working@pre_swing@male_a@trans", "pre_swing_trans_after_swing",
                 -1, 0)
