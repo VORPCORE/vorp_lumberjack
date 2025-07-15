@@ -129,7 +129,7 @@ RegisterServerEvent('vorp_lumberjack:addItem', function(max_swings)
 		end
 	end
 
-	local chance = math.random(1, 10) --todo: config this
+	local chance = math.random(1, Config.ChanceRange) 
 	local reward = {}
 	for _, v in ipairs(Config.Items) do
 		if v.chance >= chance then
