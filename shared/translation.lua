@@ -28,6 +28,8 @@ Translation.Langs = {
             notHaveAxe = "You don't have an axe ",
             descDurabilityOne = "Durability ",
             descDurabilityTwo = "Durability ",
+            Treeoncooldown  = "nothing to Chop here",
+
         },
     },
     Italiano = {
@@ -57,6 +59,8 @@ Translation.Langs = {
             notHaveAxe = "Non hai un'ascia ",
             descDurabilityOne = "Durabilità ",
             descDurabilityTwo = "Durabilità ",
+            Treeoncooldown  = "nothing to Chop here",
+
         },
     },
     Portugues_PT = {
@@ -86,6 +90,7 @@ Translation.Langs = {
             notHaveAxe = "Você não tem um machado ",
             descDurabilityOne = "Durabilidade ",
             descDurabilityTwo = "Durabilidade ",
+            Treeoncooldown  = "nothing to Chop here",
         },
     },
     Portugues_BR = {
@@ -115,6 +120,7 @@ Translation.Langs = {
             notHaveAxe = "Você não tem um machado ",
             descDurabilityOne = "Durabilidade ",
             descDurabilityTwo = "Durabilidade ",
+            Treeoncooldown  = "nothing to Chop here",
         },
     },
     Francais = {
@@ -144,6 +150,7 @@ Translation.Langs = {
             notHaveAxe = "Vous n'avez pas de hache ",
             descDurabilityOne = "Durabilité ",
             descDurabilityTwo = "Durabilité ",
+            Treeoncooldown  = "nothing to Chop here",
         },
     },
     German = {
@@ -173,6 +180,7 @@ Translation.Langs = {
             notHaveAxe = "Du hast keine Axt ",
             descDurabilityOne = "Durabilité ",
             descDurabilityTwo = "Durabilité ",
+            Treeoncooldown  = "nothing to Chop here",
         },
     },
     Espanol = {
@@ -202,6 +210,7 @@ Translation.Langs = {
             notHaveAxe = "No tienes un hacha ",
             descDurabilityOne = "Durabilidad ",
             descDurabilityTwo = "Durabilidad ",
+            Treeoncooldown  = "nothing to Chop here",
         },
     },
     Czech = {
@@ -231,6 +240,7 @@ Translation.Langs = {
             notHaveAxe = "Nemáš sekeru ",
             descDurabilityOne = "Trvanlivost ",
             descDurabilityTwo = "Trvanlivost ",
+            Treeoncooldown  = "nothing to Chop here",
         },
     },
 }
