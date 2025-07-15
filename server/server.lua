@@ -34,7 +34,7 @@ RegisterServerEvent("vorp_lumberjack:axecheck", function(tree)
 	-- is location in cool down?
 	local key <const> = getKey(choppingtree)
 	if chopping_trees_cooldown[key] then
-		VorpCore.NotifyObjective(_source, "nothing to chop here", 5000)
+		VorpCore.NotifyObjective(_source, T.NotifyLabels.Treeoncooldown, 5000)
 		TriggerClientEvent("vorp_lumberjack:noaxe", _source)
 		return
 	end
@@ -80,7 +80,7 @@ CreateThread(function()
 	while true do
 		Wait(1000)
 		for k, v in pairs(chopping_trees_cooldown) do
-			if os.time() - v.time > Config.CoolDown then
+			if os.time() - v.time > (Config.CoolDown * 60) then
 				chopping_trees_cooldown[k] = nil
 			end
 		end
