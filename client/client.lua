@@ -2,6 +2,7 @@ local CuttingPrompt
 local active = false
 local tool, hastool, UsePrompt, PropPrompt
 local swing = 0
+local holdingTool = false
 local nearby_tree
 local T = Translation.Langs[Lang]
 local TreeGroup = GetRandomIntInRange(0, 0xffffff)
@@ -172,6 +173,40 @@ local function manageStartChopPrompt(restricted_towns, player_coords)
     UiPromptSetEnabled(CuttingPrompt, is_promp_enabled)
 end
 
+local function removeToolFromPlayer()
+    hastool = false
+    holdingTool = false
+    nearby_tree = nil
+
+    if not tool then
+        return
+    end
+    local ped = PlayerPedId()
+    Citizen.InvokeNative(0xED00D72F81CF7278, tool, 1, 1)
+    DeleteObject(tool)
+    Citizen.InvokeNative(0x58F7DB5BD8FA2288, ped) -- Cancel Walk Style
+    ClearPedDesiredLocoForModel(ped)
+    ClearPedDesiredLocoMotionType(ped)
+
+    tool = nil
+end
+
+local function shouldPutAwayTool(player)
+    if IsPedOnMount(player) or IsPedInAnyVehicle(player, false) then
+        return true
+    end
+
+    if IsPedDeadOrDying(player, false) or IsPedSwimming(player) then
+        return true
+    end
+
+    if IsPedClimbing(player) or IsPedFalling(player) then
+        return true
+    end
+
+    return false
+end
+
 -- thread to find close by tree
 CreateThread(function()
     repeat Wait(5000) until LocalPlayer.state.IsInSession
@@ -180,13 +215,17 @@ CreateThread(function()
 
     while true do
         local sleep = 1000
-        if not active then
+        if holdingTool and not active then
             local player = PlayerPedId()
             local player_coords = GetEntityCoords(player)
 
-            nearby_tree = getUnChoppedNearbyTree(allowed_tree_model_hashes, player, player_coords)
-            if nearby_tree then
-                manageStartChopPrompt(restricted_towns, player_coords)
+            if shouldPutAwayTool(player) then
+                removeToolFromPlayer()
+            else
+                nearby_tree = getUnChoppedNearbyTree(allowed_tree_model_hashes, player, player_coords)
+                if nearby_tree then
+                    manageStartChopPrompt(restricted_towns, player_coords)
+                end
             end
         end
 
@@ -251,42 +290,21 @@ local function removeCuttingPrompt()
     end
 end
 
-local function removeToolFromPlayer()
-    hastool = false
-
-    if not tool then
-        return
-    end
-    local ped = PlayerPedId()
-    Citizen.InvokeNative(0xED00D72F81CF7278, tool, 1, 1)
-    DeleteObject(tool)
-    Citizen.InvokeNative(0x58F7DB5BD8FA2288, ped) -- Cancel Walk Style
-    ClearPedDesiredLocoForModel(ped)
-    ClearPedDesiredLocoMotionType(ped)
-
-    tool = nil
-end
-
 local function treeFinished(tree)
     swing = 0
     -- rememberTreeAsChopped(tree) -- remember tree as chopped? to then remove it ?
     Wait(2000)
-    removeToolFromPlayer()
     active = false
     --  forgetTreeAsChopped(tree)
     TriggerServerEvent("vorp_lumberjack:resetTable", tree)
 end
 
 local function EquipTool(toolhash)
-    hastool = false
-    Citizen.InvokeNative(0x6A2F820452017EA2) -- Clear Prompts from Screen
     if tool then
         DeleteEntity(tool)
     end
-    Wait(500)
-    FPrompt()
-    LMPrompt()
     local ped = PlayerPedId()
+    SetCurrentPedWeapon(ped, GetHashKey("WEAPON_UNARMED"), true, 0, false, false)
     local coords = GetOffsetFromEntityInWorldCoords(ped, 0.0, 0.0, 0.0)
     tool = CreateObject(toolhash, coords.x, coords.y, coords.z, true, false, false, false)
     AttachEntityToEntity(tool, ped, GetPedBoneIndex(ped, 7966), 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, false, false, false, false,
@@ -297,7 +315,10 @@ local function EquipTool(toolhash)
     ForceEntityAiAndAnimationUpdate(tool, true)
     Citizen.InvokeNative(0x3A50753042B6891B, ped, "PITCH_FORKS")
 
-    Wait(500)
+    holdingTool = true
+end
+
+local function goChop(tree)
     -- show prompts
     UiPromptSetEnabled(PropPrompt, true)
     UiPromptSetVisible(PropPrompt, true)
@@ -306,10 +327,6 @@ local function EquipTool(toolhash)
     UiPromptSetVisible(UsePrompt, true)
 
     hastool = true
-end
-
-local function goChop(tree)
-    EquipTool('p_axe02x')
     local swingcount = math.random(Config.MinSwing, Config.MaxSwing)
 
     while hastool do
@@ -320,14 +337,14 @@ local function goChop(tree)
             treeFinished(tree)
             break
         elseif IsControlJustPressed(0, Config.ChopTreeKey) then
-            local randomizer = math.random(Config.maxDifficulty, Config.minDifficulty)
             UiPromptSetEnabled(UsePrompt, false)
             swing = swing + 1
             local ped = PlayerPedId()
             Anim(ped, "amb_work@world_human_tree_chop_new@working@pre_swing@male_a@trans", "pre_swing_trans_after_swing",
                 -1, 0)
-            local testplayer = exports["syn_minigame"]:taskBar(randomizer, 7)
-            if testplayer == 100 then
+            local difficulty = Config.SkillbarDifficulty[math.random(1, #Config.SkillbarDifficulty)]
+            local result = exports.vorp_lib:skillbarStart({ difficulty = difficulty })
+            if result then
                 TriggerServerEvent('vorp_lumberjack:addItem', swingcount)
             else
                 local lumberjack_fail_txt_index = math.random(1, #T)
@@ -347,6 +364,7 @@ local function goChop(tree)
 
         Wait(0)
     end
+    hastool = false
     -- unfreeze and lock prompts
     releasePlayer()
     -- unlock main loop
@@ -356,6 +374,8 @@ end
 CreateThread(function()
     repeat Wait(5000) until LocalPlayer.state.IsInSession
     CreateStartChopPrompt()
+    FPrompt()
+    LMPrompt()
 
     while true do
         local aleep = 1000
@@ -388,6 +408,28 @@ RegisterNetEvent("vorp_lumberjack:noaxe", function()
     active = false
 end)
 
+
+-- use the axe item to hold it or put it away
+RegisterNetEvent("vorp_lumberjack:toggleAxe", function()
+    if active then
+        return
+    end
+
+    if holdingTool then
+        return removeToolFromPlayer()
+    end
+
+    if not isPlayerReadyToChopTrees(PlayerPedId()) then
+        return
+    end
+
+    EquipTool('p_axe02x')
+end)
+
+-- axe broke or is not in the inventory anymore
+RegisterNetEvent("vorp_lumberjack:removeAxe", function()
+    removeToolFromPlayer()
+end)
 
 AddEventHandler('onResourceStop', function(resourceName)
     if (GetCurrentResourceName() ~= resourceName) then

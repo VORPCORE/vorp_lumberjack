@@ -16,9 +16,9 @@ Config.AxeDurabilityThreshold = 20      -- Breakage threshold of the pickaxe
 Config.AxeBreakChanceMin = 1            -- Lower limit of the probability of the pick breaking
 Config.AxeBreakChanceMax = 3            -- Upper limit of the probability of the pick breaking
 
--- Lower number is harder
-Config.minDifficulty = 3800
-Config.maxDifficulty = 2000
+-- skill bar difficulty, a random one is picked on every swing
+-- easy, normal, medium, hard, ultra, extreme
+Config.SkillbarDifficulty = { "easy", "normal", "medium", "hard" }
 ---------------------------
 
 Config.CoolDown = 60 -- 1 minute how long to wait after chopping a tree to chop again

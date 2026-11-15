@@ -6,17 +6,19 @@ Lumberjack Script for VORP Core
 
 ## Installation
 - ensure vorp_lumberjack` in your `server.cfg` / `resources.cfg`
-- ensure syn_minigame` in your `server.cfg` / `resources.cfg`
+- ensure vorp_lib` in your `server.cfg` / `resources.cfg`
+- the axe item (`Config.Axe`) must be usable in your database
 
 ## Features
 - Chop trees and get items 
+- Use the axe item to hold it, use it again to put it away
 - This script uses the tooll with durability "metadata"
 - Forbid cutting down trees in cities if you want
 - Random messages when minigame fail
 
 ## Dependencies
 - [VORP Core](https://github.com/VORPCORE/vorp-core-lua)
-- [syn_minigame](https://cdn.discordapp.com/attachments/903875147050655744/906890251312721940/syn_minigame.rar)
+- [vorp_lib](https://github.com/VORPCORE/vorp_lib)
 
 ## Credits
 - The creator of the original script and everyone who contributed to it.
