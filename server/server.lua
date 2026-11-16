@@ -43,6 +43,7 @@ RegisterServerEvent("vorp_lumberjack:axecheck", function(tree)
 	if not axe then
 		TriggerClientEvent("vorp_lumberjack:noaxe", _source)
 		VorpCore.NotifyObjective(_source, T.NotifyLabels.notHaveAxe, 5000)
+		TriggerClientEvent("vorp_lumberjack:removeAxe", _source)
 		return
 	end
 
@@ -62,6 +63,7 @@ RegisterServerEvent("vorp_lumberjack:axecheck", function(tree)
 				VorpCore.NotifyObjective(_source, T.NotifyLabels.brokeAxe, 5000)
 				exports.vorp_inventory:subItem(_source, Config.Axe, 1, meta)
 				TriggerClientEvent("vorp_lumberjack:noaxe", _source)
+				TriggerClientEvent("vorp_lumberjack:removeAxe", _source)
 				return
 			else
 				exports.vorp_inventory:setItemMetadata(_source, axe.id, metadata, 1)
@@ -154,6 +156,12 @@ RegisterServerEvent('vorp_lumberjack:addItem', function(max_swings)
 	exports.vorp_inventory:addItem(_source, reward[chance2].name, count)
 	VorpCore.NotifyObjective(_source, T.NotifyLabels.yourGot .. reward[chance2].label, 3000)
 end)
+
+-- use the axe item to hold it or put it away
+exports.vorp_inventory:registerUsableItem(Config.Axe, function(data)
+	exports.vorp_inventory:closeInventory(data.source)
+	TriggerClientEvent("vorp_lumberjack:toggleAxe", data.source)
+end, GetCurrentResourceName())
 
 AddEventHandler('playerDropped', function()
 	local _source = source
